@@ -62,6 +62,7 @@ Players navigate through each domain, making security decisions that earn XP for
 | `1-4` | Select a numbered choice |
 | `help` | Show help message |
 | `status` | Show your current stats |
+| '0/C' | Change Theme, anytime | 
 | `quit` | Abandon your quest |
 
 ## License
