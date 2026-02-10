@@ -146,8 +146,75 @@ class Game:
 
         self.player = Player(name=name)
 
+        # Domain selection (optional - start at a specific domain)
+        self._select_starting_domain()
+
         # Main game loop
         self._game_loop()
+
+    def _select_starting_domain(self) -> None:
+        """Allow player to choose which domain to start from."""
+        self.display.clear_screen()
+
+        domain_names = {
+            1: "Security & Risk Management",
+            2: "Asset Security",
+            3: "Security Architecture & Engineering",
+            4: "Communication & Network Security",
+            5: "Identity & Access Management",
+            6: "Security Assessment & Testing",
+            7: "Security Operations",
+            8: "Software Development Security"
+        }
+
+        if self.theme_manager.current_theme == StoryTheme.CORPORATE:
+            print("\n  " + "=" * 60)
+            print("  TRAINING MODULE SELECTION")
+            print("  " + "=" * 60)
+            print("\n  Which department would you like to start your training in?\n")
+        else:
+            print("\n  " + "=" * 60)
+            print("  DOMAIN SELECTION")
+            print("  " + "=" * 60)
+            print("\n  Which domain would you like to begin your trials?\n")
+
+        for num, name in domain_names.items():
+            print(f"    [{num}] Domain {num}: {name}")
+
+        print(f"\n    [ENTER] Start from the beginning (Domain 1)")
+        print()
+
+        while True:
+            choice = self.input.get_text("  Select starting domain (1-8 or ENTER for Domain 1): ")
+            if choice is None:
+                return
+
+            choice = choice.strip()
+
+            # Default to domain 1 if just pressing enter
+            if choice == '':
+                self.player.current_domain = 1
+                break
+
+            # Validate numeric input
+            if choice.isdigit():
+                domain = int(choice)
+                if 1 <= domain <= 8:
+                    self.player.current_domain = domain
+                    if domain > 1:
+                        if self.theme_manager.current_theme == StoryTheme.CORPORATE:
+                            print(f"\n  Starting at Level {domain}: {domain_names[domain]}")
+                            print("  (Previous modules marked as reviewed)")
+                        else:
+                            print(f"\n  Beginning at Domain {domain}: {domain_names[domain]}")
+                            print("  (Earlier domains acknowledged as mastered)")
+                        self.input.wait_for_enter("\n  Press ENTER to continue...")
+                    break
+
+            print("  Please enter a number 1-8, or press ENTER for Domain 1.")
+
+        # Show educational introduction for the starting domain
+        self._show_domain_introduction(self.player.current_domain)
 
     def _select_theme(self) -> None:
         """Let the player choose their preferred story theme."""
@@ -223,9 +290,6 @@ Fail... and you shall face THE AUDIT.
             print(self.display.render_narrative(intro, "THE VOICE OF THE CITADEL"))
 
         self.input.wait_for_enter("\n  Press ENTER to begin your journey...")
-
-        # Show Domain 1 educational introduction
-        self._show_domain_introduction(1)
 
     def _get_player_name(self) -> Optional[str]:
         """Prompt player for their character name (theme-aware)."""
@@ -425,7 +489,12 @@ Fail... and you shall face THE AUDIT.
 
     def _handle_success(self, scenario: Scenario) -> None:
         """Process a correct answer (theme-aware)."""
-        title_changed = self.player.gain_xp(scenario.xp_reward)
+        title_changed = self.player.gain_xp(scenario.xp_reward, scenario.domain)
+
+        # HP regeneration: restore 5 HP on correct answer if below max
+        hp_healed = 0
+        if self.player.hp < self.player.max_hp:
+            hp_healed = self.player.heal(5)
 
         # Get themed success text
         content = scenario.get_themed_content(self.theme_manager.current_theme)
@@ -433,7 +502,8 @@ Fail... and you shall face THE AUDIT.
 
         print(self.display.render_success(
             success_text,
-            scenario.xp_reward
+            scenario.xp_reward,
+            hp_healed
         ))
 
         if title_changed:
@@ -444,15 +514,29 @@ Fail... and you shall face THE AUDIT.
 
     def _handle_failure(self, scenario: Scenario, chosen: int) -> None:
         """Process an incorrect answer (theme-aware)."""
-        self.player.take_damage(scenario.hp_penalty)
+        self.player.take_damage(scenario.hp_penalty, scenario.domain)
 
         # Get the specific reasoning for this wrong choice (theme-aware)
         failure_reason = scenario.get_failure_text(self.theme_manager.current_theme, chosen)
 
+        # Get the correct answer text for display
+        content = scenario.get_themed_content(self.theme_manager.current_theme)
+        choices = content.get('choices', [])
+        correct_index = scenario.correct_index
+        correct_text = ""
+        if correct_index < len(choices):
+            choice = choices[correct_index]
+            if isinstance(choice, dict):
+                correct_text = choice.get('text', str(choice))
+            else:
+                correct_text = str(choice)
+
         print(self.display.render_failure(
             failure_reason,
             scenario.hp_penalty,
-            scenario.domain_reference
+            scenario.domain_reference,
+            correct_index + 1,  # Convert to 1-based for display
+            correct_text
         ))
 
     def _show_help(self) -> None:
@@ -559,15 +643,72 @@ Fail... and you shall face THE AUDIT.
         print(f"\n  Total XP Earned: {self.player.xp}")
         print(f"  Correct Answers: {self.player.correct_answers}")
         print(f"  Incorrect Answers: {self.player.wrong_answers}")
-        print(f"  Accuracy: {accuracy:.1f}%")
+        print(f"  Overall Accuracy: {accuracy:.1f}%")
         print(f"  Performance Rating: {rating}")
+
+        # Per-domain breakdown
+        print("\n  " + "-" * 60)
+        print("  DOMAIN BREAKDOWN")
+        print("  " + "-" * 60)
+
+        domain_names = {
+            1: "Security & Risk Mgmt",
+            2: "Asset Security",
+            3: "Security Architecture",
+            4: "Network Security",
+            5: "Identity & Access Mgmt",
+            6: "Assessment & Testing",
+            7: "Security Operations",
+            8: "Software Dev Security"
+        }
+
+        weak_domains = []
+        for domain in range(1, 9):
+            stats = self.player.domain_stats[domain]
+            total = stats["correct"] + stats["wrong"]
+            if total > 0:
+                dom_accuracy = (stats["correct"] / total) * 100
+                status = "✓" if dom_accuracy >= 75 else "✗"
+                print(f"  {status} Domain {domain}: {domain_names[domain]:<22} "
+                      f"{stats['correct']:>2}/{total:<2} ({dom_accuracy:>5.1f}%)")
+                if dom_accuracy < 75:
+                    weak_domains.append((domain, domain_names[domain], dom_accuracy))
+
         print("\n  " + "=" * 60)
 
-        # Recommendations based on performance
-        if accuracy < 80:
-            print("\n  RECOMMENDED REVIEW AREAS:")
-            print("  - Review the Post-Mortem explanations for missed questions")
-            print("  - Focus on the CISSP domain references provided")
-            print("  - Consider additional study materials for challenging topics")
+        # CISSP Exam Readiness Guidance
+        print("\n  CISSP EXAM READINESS")
+        print("  " + "-" * 60)
 
+        if accuracy >= 90:
+            print("  ★ STRONG CANDIDATE")
+            print("  You've demonstrated excellent mastery across all domains.")
+            print("  Consider scheduling your CISSP exam soon while the")
+            print("  material is fresh. Review any domains below 90% briefly.")
+        elif accuracy >= 80:
+            print("  ◆ GOOD FOUNDATION")
+            print("  You have a solid understanding of CISSP concepts.")
+            if weak_domains:
+                print("  Focus additional study on these domains before your exam:")
+                for d_num, d_name, d_acc in weak_domains:
+                    print(f"    - Domain {d_num}: {d_name} ({d_acc:.1f}%)")
+            print("  Consider 2-4 more weeks of targeted review.")
+        elif accuracy >= 70:
+            print("  ◇ MORE STUDY NEEDED")
+            print("  You're building a foundation, but need more preparation.")
+            if weak_domains:
+                print("  Prioritize these domains in your study plan:")
+                for d_num, d_name, d_acc in weak_domains:
+                    print(f"    - Domain {d_num}: {d_name} ({d_acc:.1f}%)")
+            print("  Recommend 4-8 weeks of additional study before the exam.")
+        else:
+            print("  ○ ADDITIONAL PREPARATION RECOMMENDED")
+            print("  The CISSP exam requires comprehensive domain knowledge.")
+            print("  Consider these study resources:")
+            print("    - Official (ISC)² CISSP Study Guide")
+            print("    - CISSP All-in-One Exam Guide (Shon Harris)")
+            print("    - Practice exams and study groups")
+            print("  Retake this training after completing additional study.")
+
+        print("\n  " + "=" * 60)
         print()

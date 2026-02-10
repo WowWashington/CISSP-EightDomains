@@ -130,22 +130,24 @@ class Display:
         output += "\n  > "
         return output
 
-    def render_success(self, text: str, xp_gained: int) -> str:
-        """Render success feedback with XP gain."""
+    def render_success(self, text: str, xp_gained: int, hp_healed: int = 0) -> str:
+        """Render success feedback with XP gain and optional HP recovery."""
         if HAS_COLOR:
             header = f"{Fore.GREEN}{'=' * 60}{Style.RESET_ALL}"
             xp_text = f"{Fore.GREEN}+{xp_gained} XP{Style.RESET_ALL}"
             check = f"{Fore.GREEN}[SUCCESS]{Style.RESET_ALL}"
+            hp_text = f"  {Fore.GREEN}+{hp_healed} HP restored{Style.RESET_ALL}" if hp_healed > 0 else ""
         else:
             header = "=" * 60
             xp_text = f"+{xp_gained} XP"
             check = "[SUCCESS]"
+            hp_text = f"  +{hp_healed} HP restored" if hp_healed > 0 else ""
 
         wrapped = self._wrap_text(text.strip(), self.width - 6)
 
         return f"""
   {header}
-  {check} - {xp_text}
+  {check} - {xp_text}{hp_text}
   {header}
 
   {wrapped}
@@ -153,18 +155,26 @@ class Display:
   {header}
 """
 
-    def render_failure(self, text: str, hp_lost: int, domain_ref: str) -> str:
-        """Render failure feedback with HP loss and CISSP reference."""
+    def render_failure(self, text: str, hp_lost: int, domain_ref: str,
+                       correct_num: int = None, correct_text: str = None) -> str:
+        """Render failure feedback with HP loss, correct answer, and CISSP reference."""
         if HAS_COLOR:
             header = f"{Fore.RED}{'=' * 60}{Style.RESET_ALL}"
             hp_text = f"{Fore.RED}-{hp_lost} HP{Style.RESET_ALL}"
             x_mark = f"{Fore.RED}[CONSEQUENCE]{Style.RESET_ALL}"
+            correct_label = f"{Fore.GREEN}[CORRECT ANSWER]{Style.RESET_ALL}"
         else:
             header = "=" * 60
             hp_text = f"-{hp_lost} HP"
             x_mark = "[CONSEQUENCE]"
+            correct_label = "[CORRECT ANSWER]"
 
         wrapped = self._wrap_text(text.strip(), self.width - 6)
+
+        # Build correct answer section
+        correct_section = ""
+        if correct_num is not None and correct_text:
+            correct_section = f"\n  {correct_label}\n  [{correct_num}] {correct_text}\n"
 
         return f"""
   {header}
@@ -173,7 +183,7 @@ class Display:
 
   [POST-MORTEM ANALYSIS]
   {wrapped}
-
+{correct_section}
   [CISSP REFERENCE: {domain_ref}]
 
   {header}
