@@ -1,0 +1,5 @@
+# The Citadel of the Eight Domains
+# Optional dependencies - the game works without them
+
+# For colored terminal output (optional but recommended)
+colorama>=0.4.6

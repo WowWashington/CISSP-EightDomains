@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(for f in /Users/automator/Downloads/CISSP-EightDomains/scenarios/domain[3-8]*.py)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(if python3 -m py_compile \"$f\")",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)"
+    ]
+  }
+}
