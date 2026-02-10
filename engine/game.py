@@ -202,12 +202,17 @@ class Game:
                 if 1 <= domain <= 8:
                     self.player.current_domain = domain
                     if domain > 1:
+                        # Award XP credit for skipped domains (500 XP per domain = 10 scenarios × 50 XP)
+                        skipped_domains = domain - 1
+                        skipped_xp = skipped_domains * 500
+                        self.player.xp = skipped_xp
+
                         if self.theme_manager.current_theme == StoryTheme.CORPORATE:
                             print(f"\n  Starting at Level {domain}: {domain_names[domain]}")
-                            print("  (Previous modules marked as reviewed)")
+                            print(f"  (Previous {skipped_domains} module(s) marked as reviewed: +{skipped_xp} XP)")
                         else:
                             print(f"\n  Beginning at Domain {domain}: {domain_names[domain]}")
-                            print("  (Earlier domains acknowledged as mastered)")
+                            print(f"  (Earlier {skipped_domains} domain(s) acknowledged as mastered: +{skipped_xp} XP)")
                         self.input.wait_for_enter("\n  Press ENTER to continue...")
                     break
 
