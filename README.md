@@ -19,7 +19,7 @@ A text-based adventure game that transforms dry CISSP study material into engagi
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/CISSP-EightDomains.git
+git clone https://github.com/WowWashington/CISSP-EightDomains.git
 cd CISSP-EightDomains
 python citadel.py
 ```
