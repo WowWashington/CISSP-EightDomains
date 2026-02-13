@@ -36,3 +36,4 @@ htmlcov/
 # Exports (local copies, not for distribution)
 CISSP_Questions_Export.txt
 *_Export.txt
+STATE.md
