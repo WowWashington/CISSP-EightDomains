@@ -2,6 +2,8 @@
 
 **An immersive CISSP exam preparation game with 144 scenario-based challenges across all 8 security domains.**
 
+**Now includes:** SOC Analyst Certification Trainer with 48 additional scenarios.
+
 ## What It Is
 
 A text-based adventure game that transforms dry CISSP study material into engaging, narrative-driven scenarios. Players face real-world security dilemmas wrapped in two distinct themes:
@@ -11,20 +13,27 @@ A text-based adventure game that transforms dry CISSP study material into engagi
 
 ## By the Numbers
 
-- **144 unique scenarios** (18 per domain)
-- **8 CISSP domains** fully covered
-- **2 theme variations** for every question
+- **192 total scenarios** across two training programs
+- **144 CISSP scenarios** (18 per domain, 8 domains)
+- **48 SOC Analyst scenarios** (8 per domain, 6 domains)
+- **2 theme variations** for every CISSP question
 - **Detailed explanations** for both correct and incorrect answers
+- **Save/resume system** — pick up where you left off
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/WowWashington/CISSP-EightDomains.git
 cd CISSP-EightDomains
+
+# CISSP Exam Prep (8 domains, 144 scenarios)
 python citadel.py
+
+# SOC Analyst Certification Trainer (6 domains, 48 scenarios)
+python soc_analyst.py
 ```
 
-**Windows users:** Just double-click `play.bat`
+**Windows users:** Just double-click `play.bat` for the CISSP game
 
 ## Requirements
 
@@ -34,6 +43,7 @@ python citadel.py
 ## Perfect For
 
 - CISSP exam candidates who learn better through storytelling
+- SOC analysts preparing for CySA+, GSOC, or CSA certifications
 - Security professionals wanting an engaging refresher
 - Anyone who's tired of flashcards and wants to actually *enjoy* studying
 - Teams looking for a fun security awareness training alternative
@@ -54,6 +64,23 @@ Players navigate through each domain, making security decisions that earn XP for
 | 6 | Security Assessment and Testing |
 | 7 | Security Operations |
 | 8 | Software Development Security |
+
+## SOC Analyst Trainer
+
+A separate training mode focused on Security Operations Center analyst certifications.
+
+| Domain | Name |
+|--------|------|
+| 1 | SIEM Operations & Log Management |
+| 2 | Incident Response |
+| 3 | Threat Intelligence |
+| 4 | Network Security Monitoring |
+| 5 | Endpoint Detection & Response |
+| 6 | Vulnerability Management |
+
+Aligned with **CompTIA CySA+**, **GIAC GSOC**, and **EC-Council CSA** frameworks.
+
+Run with: `python soc_analyst.py`
 
 ## Content Validation & Methodology
 
@@ -112,7 +139,7 @@ The 144 CISSP training scenarios were developed using a **structured question ba
 
 ## License
 
-MIT License - Feel free to use, modify, and share.
+MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 

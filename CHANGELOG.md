@@ -1,44 +1,58 @@
 # Changelog
 
-All notable changes to The Citadel of the Eight Domains will be documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.3.0] - 2026-02-13
+
+### Added
+- **SOC Analyst Certification Trainer** (`python soc_analyst.py`)
+  - 48 scenarios across 6 SOC-specific domains
+  - SIEM Operations & Log Management
+  - Incident Response
+  - Threat Intelligence
+  - Network Security Monitoring
+  - Endpoint Detection & Response
+  - Vulnerability Management
+  - Based on CompTIA CySA+, GIAC GSOC, and EC-Council CSA frameworks
+  - Separate entry point and progression track
+
+---
+
+## [1.2.0] - 2026-02-13
+
+### Added
+- **Save/Resume System**: Progress persists across sessions
+  - Auto-saves after each domain completion
+  - Saves on Ctrl+C (graceful exit)
+  - Name-based save lookup (case-insensitive)
+  - Restores HP, XP, domain progress, and per-domain stats
+  - Save file automatically deleted on game completion
 
 ---
 
 ## [1.1.0] - 2025-02-10
 
 ### Added
-- **Starting Domain Selection**: Players can now choose which domain (1-8) to start from
+- **Starting Domain Selection**: Choose which domain (1-8) to begin from
   - Skipping domains awards full XP credit (500 XP per skipped domain)
-  - Useful for practicing specific weak domains or continuing after a break
-- **HP Regeneration**: Correct answers now restore +5 HP (when below 100%)
+- **HP Regeneration**: Correct answers restore +5 HP (when below 100%)
 - **Correct Answer Display**: Wrong answer feedback now shows the correct answer
 - **Per-Domain Statistics**: End-game summary shows accuracy breakdown by domain
 - **CISSP Exam Readiness Guidance**: Performance-based recommendations at game end
-  - 90%+: "Strong Candidate" - consider scheduling exam
-  - 80-89%: "Good Foundation" - review weak domains
-  - 70-79%: "More Study Needed" - focused preparation recommended
-  - <70%: "Additional Preparation Recommended" - study resources provided
+  - 90%+: Strong Candidate
+  - 80-89%: Good Foundation
+  - 70-79%: More Study Needed
+  - <70%: Additional Preparation Recommended
+- **MIT License** file for proper GitHub recognition
 
 ### Fixed
-- **Critical**: Game no longer ends prematurely at 1000 XP
-  - Victory now requires completing all 8 domains
-  - Previously, players could "win" mid-Domain 2
-- **XP Title Thresholds**: Scaled to match full 8-domain game (0-4000 XP range)
-  - Titles now progress appropriately across the entire game
-
-### Changed
-- XP is now purely a scoring mechanism, not a win condition
-- Title progression thresholds adjusted for 8-domain gameplay:
-  - 0: Novice Scribe
-  - 400: Apprentice Guardian
-  - 1000: Warden of Secrets
-  - 1600: Keeper of the Cipher
-  - 2200: Shield Bearer
-  - 2800: Master of Controls
-  - 3400: High Sentinel
-  - 4000: Information Systems Security Professional
+- Game no longer ends prematurely at 1000 XP — victory requires completing all 8 domains
+- XP title thresholds scaled to match full 8-domain game (0-4000 XP range)
 
 ---
 
@@ -55,19 +69,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   6. Security Assessment and Testing
   7. Security Operations
   8. Software Development Security
-- **Dual Theme System**: Every scenario available in two narrative styles
+- **Dual Theme System**: Every scenario in two narrative styles
   - Fantasy: Medieval Citadel with magic, scribes, and ancient wards
   - Corporate: Office Space-style satire with IT disasters and TPS reports
 - Theme switching mid-game with `[0]` command
-- Educational domain introductions for each of the 8 domains
+- Educational domain introductions for each domain
 - Detailed wrong-answer explanations with CISSP references
 - Performance tracking (XP, HP, accuracy)
-- End-game performance summary with ratings
+- End-game performance summary
 - Cross-platform support (Windows, Mac, Linux)
 - Optional colorama support for colored terminal output
-- `play.bat` for easy Windows launching
-
-### Technical
-- Pure Python 3.6+ with zero required dependencies
-- Modular scenario architecture for easy expansion
-- Theme-aware content delivery system
