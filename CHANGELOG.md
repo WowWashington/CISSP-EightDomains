@@ -7,22 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.0] - 2026-02-13
-
-### Added
-- **SOC Analyst Certification Trainer** (`python soc_analyst.py`)
-  - 48 scenarios across 6 SOC-specific domains
-  - SIEM Operations & Log Management
-  - Incident Response
-  - Threat Intelligence
-  - Network Security Monitoring
-  - Endpoint Detection & Response
-  - Vulnerability Management
-  - Based on CompTIA CySA+, GIAC GSOC, and EC-Council CSA frameworks
-  - Separate entry point and progression track
-
----
-
 ## [1.2.0] - 2026-02-13
 
 ### Added
