@@ -3,6 +3,10 @@ Core game loop and orchestration for The Citadel of the Eight Domains.
 """
 
 import random
+import os
+import json
+import signal
+from datetime import datetime
 from typing import Dict, List, Optional
 from .player import Player, GameStatus
 from .display import Display
@@ -13,6 +17,9 @@ from data.ascii_art import (
     VICTORY_ART, VICTORY_ART_CORPORATE, COMPLETION_ART, COMPLETION_ART_CORPORATE,
     NEEDS_IMPROVEMENT_ART, NEEDS_IMPROVEMENT_ART_CORPORATE
 )
+
+# Save file for persisting player progress
+SAVE_FILE = ".certquest_saves.json"
 
 
 class Scenario:
@@ -128,8 +135,127 @@ class Game:
             scenario = Scenario(scenario_data)
             self.scenarios[scenario.domain].append(scenario)
 
+    # ========== Save/Resume Methods ==========
+
+    def _load_saves(self) -> Dict:
+        """Load all saved game states from JSON file."""
+        try:
+            if os.path.exists(SAVE_FILE):
+                with open(SAVE_FILE, 'r') as f:
+                    return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
+        return {}
+
+    def _save_state(self) -> None:
+        """Save current player state to file."""
+        if not self.player:
+            return
+
+        saves = self._load_saves()
+        saves[self.player.name.lower()] = {
+            'name': self.player.name,
+            'hp': self.player.hp,
+            'xp': self.player.xp,
+            'current_domain': self.player.current_domain,
+            'scenarios_completed': self.player.scenarios_completed,
+            'correct_answers': self.player.correct_answers,
+            'wrong_answers': self.player.wrong_answers,
+            'domain_stats': self.player.domain_stats,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        try:
+            with open(SAVE_FILE, 'w') as f:
+                json.dump(saves, f, indent=2)
+        except IOError:
+            pass
+
+    def _get_player_save(self, name: str) -> Optional[Dict]:
+        """Get save data for a specific player (case-insensitive)."""
+        saves = self._load_saves()
+        return saves.get(name.lower())
+
+    def _delete_player_save(self, name: str) -> None:
+        """Remove save data for a player after game completion."""
+        saves = self._load_saves()
+        if name.lower() in saves:
+            del saves[name.lower()]
+            try:
+                with open(SAVE_FILE, 'w') as f:
+                    json.dump(saves, f, indent=2)
+            except IOError:
+                pass
+
+    def _restore_player_state(self, save_data: Dict) -> None:
+        """Restore player state from save data."""
+        self.player.hp = save_data.get('hp', 100)
+        self.player.xp = save_data.get('xp', 0)
+        self.player.current_domain = save_data.get('current_domain', 1)
+        self.player.scenarios_completed = save_data.get('scenarios_completed', [])
+        self.player.correct_answers = save_data.get('correct_answers', 0)
+        self.player.wrong_answers = save_data.get('wrong_answers', 0)
+        # Restore domain_stats with proper integer keys
+        saved_stats = save_data.get('domain_stats', {})
+        for key, value in saved_stats.items():
+            self.player.domain_stats[int(key)] = value
+
+    def _setup_signal_handler(self) -> None:
+        """Set up Ctrl+C handler to save progress before exit."""
+        def save_on_exit(signum, frame):
+            if self.player:
+                self._save_state()
+                print("\n\n  Progress saved. See you next time, " + self.player.name + "!")
+            raise SystemExit(0)
+        signal.signal(signal.SIGINT, save_on_exit)
+
+    def _prompt_resume(self, save_data: Dict) -> bool:
+        """Ask player if they want to resume their saved progress."""
+        saved_name = save_data.get('name', 'Seeker')
+        saved_domain = save_data.get('current_domain', 1)
+        saved_hp = save_data.get('hp', 100)
+        saved_xp = save_data.get('xp', 0)
+        saved_correct = save_data.get('correct_answers', 0)
+        saved_wrong = save_data.get('wrong_answers', 0)
+        timestamp = save_data.get('timestamp', '')
+
+        # Format timestamp if available
+        time_str = ""
+        if timestamp:
+            try:
+                dt = datetime.fromisoformat(timestamp)
+                time_str = f" (saved {dt.strftime('%Y-%m-%d %H:%M')})"
+            except ValueError:
+                pass
+
+        print("\n  " + "=" * 60)
+        print("  SAVED PROGRESS FOUND" + time_str)
+        print("  " + "=" * 60)
+        print(f"\n  Seeker: {saved_name}")
+        print(f"  Domain: {saved_domain} of 8")
+        print(f"  HP: {saved_hp}/100  |  XP: {saved_xp}")
+        print(f"  Progress: {saved_correct} correct, {saved_wrong} wrong")
+        print()
+
+        if self.theme_manager.current_theme == StoryTheme.CORPORATE:
+            prompt = "  Resume your training? [Y/n] "
+        else:
+            prompt = "  Continue your journey? [Y/n] "
+
+        response = self.input.get_text(prompt)
+        if response is None:
+            return False
+        response = response.strip().lower()
+        # Default to yes if just pressing enter
+        return response in ('', 'y', 'yes')
+
+    # ========== End Save/Resume Methods ==========
+
     def run(self) -> None:
         """Main entry point - run the complete game."""
+        # Set up signal handler for saving on Ctrl+C
+        self._setup_signal_handler()
+
         self.display.clear_screen()
         print(TITLE_ART)
 
@@ -139,15 +265,31 @@ class Game:
         # Introduction
         self._show_introduction()
 
-        # Get player name
+        # Get player name and check for saved progress
         name = self._get_player_name()
         if name is None:
             return
 
         self.player = Player(name=name)
 
-        # Domain selection (optional - start at a specific domain)
-        self._select_starting_domain()
+        # Check for saved progress
+        save_data = self._get_player_save(name)
+        if save_data:
+            if self._prompt_resume(save_data):
+                # Restore saved state
+                self._restore_player_state(save_data)
+                print(f"\n  Welcome back, {name}! Resuming from Domain {self.player.current_domain}...")
+                self.input.wait_for_enter("\n  Press ENTER to continue your journey...")
+                # Show domain intro for current domain
+                self._show_domain_introduction(self.player.current_domain)
+            else:
+                # Start fresh - delete old save
+                self._delete_player_save(name)
+                # Domain selection (optional - start at a specific domain)
+                self._select_starting_domain()
+        else:
+            # No saved progress - Domain selection (optional - start at a specific domain)
+            self._select_starting_domain()
 
         # Main game loop
         self._game_loop()
@@ -371,6 +513,10 @@ Fail... and you shall face THE AUDIT.
         """Move player to the next domain. Returns False if no more domains."""
         if self.player.current_domain < 8:
             self.player.current_domain += 1
+
+            # Save progress after completing a domain
+            self._save_state()
+
             if self.theme_manager.current_theme == StoryTheme.CORPORATE:
                 print(self.display.render_narrative(
                     f"Congratulations! You've completed that department's training. "
@@ -574,6 +720,10 @@ Fail... and you shall face THE AUDIT.
 
     def _show_ending(self) -> None:
         """Display performance summary at the end of training (theme-aware)."""
+        # Delete save file on game completion (clean finish)
+        if self.player:
+            self._delete_player_save(self.player.name)
+
         self.display.clear_screen()
 
         accuracy = self.player.accuracy
