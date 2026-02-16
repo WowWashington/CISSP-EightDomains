@@ -1,3 +1,5 @@
+## Please note - the new "CertQuest" replaces any continued work on CISSP-EightDomains - as the new one is modular, and lets you download new scenarios (SOC, CompTia) diretly from within the tool. 
+
 # The Citadel of the Eight Domains
 
 **An immersive CISSP exam preparation game with 144 scenario-based challenges across all 8 security domains.**
